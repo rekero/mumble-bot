@@ -23,6 +23,9 @@ module MumbleBot
       configure
       client = create('Aldan-3', 'mumble.yoba-gaming.ru', 64738)
       client.connect
+      client.on_text_message do |msg|
+        File.open("#{Dir.pwd}/log.txt", "a") {|file| file.write("channel: #{client.channels.to_a.map{|f| f.last}.select{|f| f.channel_id==msg.channel_id.first}.first.name}, user: #{client.users.to_a.map{|f| f.last}.select{|f| f.actor==msg.actor}.first.try(:name)}, message: #{msg.message}") }
+      end
       Thread.new do
         loop do
           sleep 5
