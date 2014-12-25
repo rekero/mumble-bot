@@ -29,6 +29,7 @@ module MumbleBot
         File.open("#{Dir.pwd}/log.txt", "a") {|file| file.write("channel: #{msg.channel_id}, user: #{msg.actor}, message: #{msg.message} \n") }
         change_channel(client, msg.message.split(' ').last)  if msg.message.include?('Уходи в ')
         client.text_channel(client.me.channel_id.to_i, wiki_search(msg.message.split(' ')[1..-1].join(' '))) if msg.message.include?('Вики')
+        client.disconnect if msg.message.include?('Вам стоит выйти')
       end
       Thread.new do
         loop do
