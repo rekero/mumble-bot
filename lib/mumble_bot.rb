@@ -1,5 +1,7 @@
 require "mumble_bot/version"
 require 'mumble-ruby'
+require 'open-uri'
+require "json"
 
 module MumbleBot
   class Aldan
@@ -24,22 +26,28 @@ module MumbleBot
       client = create('Aldan-3', 'mumble.yoba-gaming.ru', 64738)
       client.connect
       client.on_text_message do |msg|
-        File.open("#{Dir.pwd}/log.txt", "a") {|file| file.write("channel: #{client.channels.to_a.map{|f| f.last}.select{|f| f.channel_id==msg.channel_id.first}.first.name}, user: #{client.users.to_a.map{|f| f.last}.select{|f| f.actor==msg.actor}.first.try(:name)}, message: #{msg.message}") }
+        File.open("#{Dir.pwd}/log.txt", "a") {|file| file.write("channel: #{msg.channel_id}, user: #{msg.actor}, message: #{msg.message} \n") }
+        change_channel(client, msg.message.split(' ').last)  if msg.message.include?('Уходи в ')
+        client.text_channel(client.me.channel_id.to_i, wiki_search(msg.message.split(' ')[1..-1].join(' '))) if msg.message.include?('Вики')
       end
       Thread.new do
         loop do
           sleep 5
-          p client.channels
-          p client.users
+        #  p client.channels
+        #  p client.users
         end 
       end 
     end
+
+    def self.wiki_search(text)
+      JSON.parse(open(URI.parse(URI.encode("http://ru.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exintro=&titles=#{text}"))).read)['query']['pages'].first.last['extract']
+    end
     
-    def change_channel(client, name)
+    def self.change_channel(client, name)
       channel_names = client.channels.to_a.collect{|f| f.last} 
       channel_names.each do |channel_name|
         if channel_name.name == name
-          client.join_channel(channel_name.channel_id)
+          client.join_channel(channel_name)
         end
       end
     end
